@@ -110,7 +110,7 @@ button{font:inherit;color:inherit}
 .lista .cuantos{font:400 18px var(--f-display);color:var(--rosa-suave);align-self:center;font-variant-numeric:tabular-nums}
 .lista .nota{grid-column:1/-1;font-size:16px;color:#d9c6ea;overflow-wrap:anywhere}
 .lista .cuando{grid-column:1/-1;font-size:13px;letter-spacing:.08em;color:#9b86b3}
-.lista li.no{opacity:.6}
+.lista li.no .quien,.lista li.no .nota{opacity:.6}
 .lista li.no .cuantos{color:#9b86b3}
 .estado{margin:0;font-size:17px;color:var(--rosa-suave);text-align:center;padding:10px 0}
 .hecho{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:10px 0}
@@ -120,6 +120,26 @@ button{font:inherit;color:inherit}
 .hecho .btn{align-self:stretch;flex:none}
 @keyframes pop{from{transform:scale(.3);opacity:0}}
 .btn[disabled]{opacity:.6;cursor:wait}
+
+/* Admin: PIN, editar y borrar */
+.pin-caja{display:flex;flex-direction:column;gap:12px}
+.pin-caja p{margin:0;font-size:17px;color:#d9c6ea}
+.pin-caja input{font:400 30px var(--f-display);letter-spacing:.3em;text-align:center;padding:12px;border-radius:14px;border:1px solid var(--borde);background:var(--noche);color:var(--blanco)}
+.pin-caja input:focus{outline:none;border-color:var(--rosa);box-shadow:0 0 0 3px rgba(255,47,168,.25)}
+.acciones{grid-column:1/-1;display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.mini{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--borde);background:transparent;color:var(--rosa-suave);font:600 14px var(--f-body);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.mini.peligro{border-color:#ff5c7a;color:#ff8da1}
+.mini.lleno{background:var(--rosa);border-color:var(--rosa);color:var(--blanco)}
+.mini.peligro.lleno{background:#e0254b;border-color:#e0254b}
+.mini:focus-visible{outline:2px solid var(--blanco)}
+.mini[disabled]{opacity:.5;cursor:wait}
+.editar{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.editar input,.editar textarea{font:500 18px var(--f-body);padding:9px 11px;border-radius:10px;border:1px solid var(--borde);background:#12081f;color:var(--blanco);resize:none}
+.editar input:focus,.editar textarea:focus{outline:none;border-color:var(--rosa)}
+.editar .linea{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.editar .linea label{font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa-suave)}
+.editar .linea input[type=number]{width:72px;text-align:center}
+.cabeza-admin{display:flex;align-items:center;justify-content:space-between;gap:10px}
 
 /* Mini reproductor */
 .suena{position:absolute;left:calc(2% + 40px);top:2.2%;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:999px;background:rgba(7,3,13,.72);border:1px solid rgba(255,154,216,.35);opacity:0;transition:opacity .4s}
@@ -337,20 +357,33 @@ function mostrarGuia(){
   </form>
 </div>
 
-<!-- Lista secreta -->
+<!-- Lista secreta (solo con PIN) -->
 <div class="capa hoja" id="hoja-lista" aria-hidden="true" inert>
   <section class="panel" role="dialog" aria-modal="true" aria-labelledby="t-lista">
     <div class="agarre"></div>
-    <h2 id="t-lista">Confirmados</h2>
-    <div class="resumen">
-      <div class="si"><strong id="total-si">–</strong><span>Personas van</span></div>
-      <div><strong id="total-no">–</strong><span>No pueden</span></div>
-    </div>
-    <p class="estado" id="estado-lista">Cargando la lista…</p>
-    <ul class="lista" id="lista"></ul>
-    <div class="fila">
-      <button class="btn" type="button" id="refrescar">Actualizar</button>
-      <button class="btn sec" type="button" data-cerrar>Cerrar</button>
+    <form class="pin-caja" id="pin-form" autocomplete="off">
+      <h2 id="t-lista">Solo para Siuliris</h2>
+      <p>Escribe el PIN para ver y administrar las confirmaciones.</p>
+      <label class="oculto" for="pin">PIN</label>
+      <input id="pin" type="password" inputmode="text" maxlength="20" placeholder="PIN" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <p class="error oculto" id="pin-error">PIN incorrecto. Intenta otra vez.</p>
+      <div class="fila">
+        <button class="btn" type="submit" id="pin-entrar">Entrar</button>
+        <button class="btn sec" type="button" data-cerrar>Cerrar</button>
+      </div>
+    </form>
+    <div id="admin" class="oculto" style="display:flex;flex-direction:column;gap:14px">
+      <div class="cabeza-admin"><h2>Confirmados</h2><button class="mini" type="button" id="salir-admin">Salir</button></div>
+      <div class="resumen">
+        <div class="si"><strong id="total-si">–</strong><span>Personas van</span></div>
+        <div><strong id="total-no">–</strong><span>No pueden</span></div>
+      </div>
+      <p class="estado" id="estado-lista">Cargando la lista…</p>
+      <ul class="lista" id="lista"></ul>
+      <div class="fila">
+        <button class="btn" type="button" id="refrescar">Actualizar</button>
+        <button class="btn sec" type="button" data-cerrar>Cerrar</button>
+      </div>
     </div>
   </section>
 </div>
@@ -628,40 +661,128 @@ $("z-rsvp").addEventListener("click", prepararRsvp);
 document.querySelectorAll('[data-abrir="hoja-rsvp"]').forEach(function(b){ b.addEventListener("click", prepararRsvp); });
 pintarBotonVideo(leerConfirmacion());
 
-/* Lista secreta */
+/* Lista secreta: solo con PIN, con editar y borrar */
+var PIN_CLAVE = "siuliris21-pin", pinAdmin = "";
+try{ pinAdmin = sessionStorage.getItem(PIN_CLAVE) || ""; }catch(e){}
+var editando = false;
 function fechaCorta(v){
   var d = new Date(v); if(isNaN(d)) return "";
   return d.toLocaleDateString("es-PR", { day: "numeric", month: "short" }) + " · " + d.toLocaleTimeString("es-PR", { hour: "numeric", minute: "2-digit" });
 }
+function api(metodo, datos){
+  var op = { method: metodo, headers: { "x-pin": pinAdmin } };
+  if(datos){ op.headers["Content-Type"] = "application/json"; op.body = JSON.stringify(datos); }
+  return fetch(HOJA_URL + (metodo === "GET" ? "?t=" + Date.now() : ""), op).then(function(r){
+    if(r.status === 401){ var e = new Error("pin"); throw e; }
+    return r.json();
+  });
+}
+function mostrarPin(error){
+  clearInterval(auto);
+  $("admin").classList.add("oculto"); $("pin-form").classList.remove("oculto");
+  $("pin-error").classList.toggle("oculto", !error);
+  $("pin").value = "";
+}
+function mostrarAdmin(){
+  $("pin-form").classList.add("oculto"); $("admin").classList.remove("oculto");
+}
+function boton(texto, clase){ var b = document.createElement("button"); b.type = "button"; b.className = "mini" + (clase ? " " + clase : ""); b.textContent = texto; return b; }
+function pintarFila(f){
+  var li = document.createElement("li"); if(!f.va) li.className = "no";
+  var a = document.createElement("span"); a.className = "quien"; a.textContent = f.nombre;
+  var b = document.createElement("span"); b.className = "cuantos"; b.textContent = f.va ? f.personas + (f.personas === 1 ? " persona" : " personas") : "No va";
+  li.appendChild(a); li.appendChild(b);
+  if(f.nota){ var c = document.createElement("span"); c.className = "nota"; c.textContent = "“" + f.nota + "”"; li.appendChild(c); }
+  var d = document.createElement("span"); d.className = "cuando"; d.textContent = fechaCorta(f.fecha) + (f.editado ? " · editado" : ""); li.appendChild(d);
+  var acc = document.createElement("div"); acc.className = "acciones";
+  var bEd = boton("Editar"), bBo = boton("Borrar", "peligro");
+  acc.appendChild(bEd); acc.appendChild(bBo); li.appendChild(acc);
+  bEd.addEventListener("click", function(){ abrirEdicion(li, f); });
+  bBo.addEventListener("click", function(){
+    // Confirmación dentro de la página: segundo toque para borrar.
+    acc.innerHTML = "";
+    var t = document.createElement("span"); t.className = "nota"; t.style.gridColumn = "auto"; t.textContent = "¿Borrar a " + f.nombre + "?";
+    var si = boton("Sí, borrar", "peligro lleno"), no = boton("No");
+    acc.appendChild(t); acc.appendChild(si); acc.appendChild(no); editando = true;
+    no.addEventListener("click", function(){ editando = false; cargarLista(); });
+    si.addEventListener("click", function(){
+      si.disabled = true; si.textContent = "Borrando…";
+      api("DELETE", { clave: f.clave }).then(function(){ editando = false; cargarLista(); })
+        .catch(function(e){ editando = false; if(e.message === "pin") mostrarPin(true); else { si.disabled = false; si.textContent = "Reintentar"; } });
+    });
+  });
+  return li;
+}
+function abrirEdicion(li, f){
+  editando = true;
+  var acc = li.querySelector(".acciones"); acc.remove();
+  var box = document.createElement("div"); box.className = "editar";
+  var nom = document.createElement("input"); nom.value = f.nombre; nom.maxLength = 50; nom.setAttribute("aria-label", "Nombre");
+  var linea = document.createElement("div"); linea.className = "linea";
+  var bVa = boton(f.va ? "Va ✓" : "No va", f.va ? "lleno" : "");
+  var lab = document.createElement("label"); lab.textContent = "Personas";
+  var per = document.createElement("input"); per.type = "number"; per.min = 1; per.max = 10; per.value = f.va ? f.personas : 1; per.setAttribute("aria-label", "Personas");
+  var va = f.va;
+  function pintarVa(){ bVa.textContent = va ? "Va ✓" : "No va"; bVa.className = "mini" + (va ? " lleno" : ""); lab.style.display = per.style.display = va ? "" : "none"; }
+  bVa.addEventListener("click", function(){ va = !va; pintarVa(); });
+  linea.appendChild(bVa); linea.appendChild(lab); linea.appendChild(per); pintarVa();
+  var nt = document.createElement("textarea"); nt.rows = 2; nt.maxLength = 160; nt.value = f.nota || ""; nt.placeholder = "Mensaje"; nt.setAttribute("aria-label", "Mensaje");
+  var fin = document.createElement("div"); fin.className = "linea";
+  var g = boton("Guardar", "lleno"), x = boton("Cancelar");
+  fin.appendChild(g); fin.appendChild(x);
+  box.appendChild(nom); box.appendChild(linea); box.appendChild(nt); box.appendChild(fin);
+  li.appendChild(box); nom.focus();
+  x.addEventListener("click", function(){ editando = false; cargarLista(); });
+  g.addEventListener("click", function(){
+    if(!nom.value.trim()){ nom.focus(); return; }
+    g.disabled = true; g.textContent = "Guardando…";
+    api("PUT", { clave: f.clave, nombre: nom.value, va: va ? "si" : "no", personas: Number(per.value) || 1, nota: nt.value })
+      .then(function(j){ if(!j.ok) throw new Error(j.error || "error"); editando = false; cargarLista(); })
+      .catch(function(e){ if(e.message === "pin"){ editando = false; mostrarPin(true); } else { g.disabled = false; g.textContent = "Reintentar"; } });
+  });
+}
 function cargarLista(){
   var est = $("estado-lista"), ul = $("lista");
-  if(!HOJA_URL){ est.textContent = "La lista todavía no está activa en este sitio. Las confirmaciones están llegando por WhatsApp."; est.classList.remove("oculto"); return; }
+  if(!HOJA_URL){ mostrarAdmin(); $("salir-admin").classList.add("oculto"); est.textContent = "La lista todavía no está activa en este sitio. Las confirmaciones están llegando por WhatsApp."; est.classList.remove("oculto"); return; }
+  if(!pinAdmin){ mostrarPin(false); return; }
+  if(editando) return;
+  mostrarAdmin();
   if(!ul.children.length){ est.textContent = "Cargando la lista…"; est.classList.remove("oculto"); }
-  fetch(HOJA_URL + (HOJA_URL.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now()).then(function(r){ return r.json(); }).then(function(j){
-    var vistos = {}, filas = [];
-    (j.lista || []).forEach(function(f){ var k = String(f.nombre || "").trim().toLowerCase(); if(!k) return; vistos[k] = f; });
-    Object.keys(vistos).forEach(function(k){ filas.push(vistos[k]); });
+  api("GET").then(function(j){
+    if(editando) return;
+    var filas = (j.lista || []).map(function(f){ return { clave: f.clave, nombre: f.nombre, va: !!f.va, personas: Number(f.personas) || 1, nota: f.nota || "", fecha: f.fecha, editado: f.editado }; });
     filas.sort(function(a, b){ return (b.va - a.va) || (new Date(b.fecha) - new Date(a.fecha)); });
     var si = 0, no = 0; ul.innerHTML = "";
-    filas.forEach(function(f){
-      if(f.va) si += Number(f.personas) || 1; else no++;
-      var li = document.createElement("li"); if(!f.va) li.className = "no";
-      var a = document.createElement("span"); a.className = "quien"; a.textContent = f.nombre;
-      var b = document.createElement("span"); b.className = "cuantos"; b.textContent = f.va ? (Number(f.personas) || 1) + (Number(f.personas) === 1 ? " persona" : " personas") : "No va";
-      li.appendChild(a); li.appendChild(b);
-      if(f.nota){ var c = document.createElement("span"); c.className = "nota"; c.textContent = "“" + f.nota + "”"; li.appendChild(c); }
-      var d = document.createElement("span"); d.className = "cuando"; d.textContent = fechaCorta(f.fecha); li.appendChild(d);
-      ul.appendChild(li);
-    });
+    filas.forEach(function(f){ if(f.va) si += f.personas; else no++; ul.appendChild(pintarFila(f)); });
     $("total-si").textContent = si; $("total-no").textContent = no;
-    if(filas.length){ est.classList.add("oculto"); } else { est.textContent = "Nadie ha confirmado todavía."; }
-  }).catch(function(){ est.textContent = "No se pudo cargar la lista. Revisa tu conexión y toca Actualizar."; });
+    if(filas.length){ est.classList.add("oculto"); } else { est.textContent = "Nadie ha confirmado todavía."; est.classList.remove("oculto"); }
+  }).catch(function(e){
+    if(e.message === "pin"){ pinAdmin = ""; try{ sessionStorage.removeItem(PIN_CLAVE); }catch(x){} mostrarPin(true); return; }
+    est.textContent = "No se pudo cargar la lista. Revisa tu conexión y toca Actualizar."; est.classList.remove("oculto");
+  });
 }
-$("secreto").addEventListener("click", function(){
-  abrirHoja("hoja-lista"); cargarLista();
-  clearInterval(auto); if(HOJA_URL) auto = setInterval(cargarLista, 8000);
+$("pin-form").addEventListener("submit", function(e){
+  e.preventDefault();
+  var v = $("pin").value.trim(); if(!v){ $("pin").focus(); return; }
+  if(!HOJA_URL){ cargarLista(); return; }
+  var b = $("pin-entrar"); b.disabled = true; b.textContent = "Verificando…";
+  pinAdmin = v;
+  api("GET").then(function(){
+    try{ sessionStorage.setItem(PIN_CLAVE, v); }catch(x){}
+    $("lista").innerHTML = ""; cargarLista();
+    clearInterval(auto); auto = setInterval(cargarLista, 8000);
+  }).catch(function(err){ pinAdmin = ""; mostrarPin(err.message === "pin"); if(err.message !== "pin"){ $("pin-error").textContent = "No hay conexión. Intenta otra vez."; $("pin-error").classList.remove("oculto"); } })
+    .then(function(){ b.disabled = false; b.textContent = "Entrar"; });
 });
-$("refrescar").addEventListener("click", cargarLista);
+$("salir-admin").addEventListener("click", function(){
+  pinAdmin = ""; try{ sessionStorage.removeItem(PIN_CLAVE); }catch(x){}
+  $("lista").innerHTML = ""; $("pin-error").textContent = "PIN incorrecto. Intenta otra vez."; mostrarPin(false);
+});
+$("secreto").addEventListener("click", function(){
+  abrirHoja("hoja-lista"); editando = false; cargarLista();
+  clearInterval(auto); if(HOJA_URL && pinAdmin) auto = setInterval(cargarLista, 8000);
+});
+$("refrescar").addEventListener("click", function(){ editando = false; cargarLista(); });
 actualizar();
 
 /* Luces al ritmo: el ritmo de cada canción ya viene calculado, así el teléfono no analiza audio. */
